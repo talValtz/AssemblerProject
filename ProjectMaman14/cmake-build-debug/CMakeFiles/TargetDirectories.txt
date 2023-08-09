@@ -1,0 +1,3 @@
+/Users/talvaltzer/CLionProjects/ProjectMaman14/cmake-build-debug/CMakeFiles/ProjectMaman14.dir
+/Users/talvaltzer/CLionProjects/ProjectMaman14/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/talvaltzer/CLionProjects/ProjectMaman14/cmake-build-debug/CMakeFiles/rebuild_cache.dir
