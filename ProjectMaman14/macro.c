@@ -1,36 +1,23 @@
 #include "macro.h"
 #include "firstPass.h"
-
-char *str_allocate_cat(char *first_str, char *second_str)
+/*Allocates memory and concatenates two strings.*/
+char *stringTwoStrings(char *first_str, char *second_str)
 {
     char *str = (char *)malloc(strlen(first_str) + strlen(second_str) + 1);
     strcpy(str, first_str);
     strcat(str, second_str);
     return str;
 }
-
+/*Copies the content of a Macro structure to a specified file.*/
 int copyContentToFile(Macro *cur, FILE *cpy)
 {
     int i = 0;
-    printf("%lu\n", strlen(cur->content));
     fputs(cur->content, cpy);
-    /*while (i < strlen(cur->content))
-    {
 
-        if (!isspace(cur->content[i]))
-        {
-            fputc(cur->content[i], cpy);
-        }
-        if (cur->content[i] == '\n')
-        {
-            fputc(cur->content[i], cpy);
-        }
-        i++;
-    }*/
     return 0;
 }
 
-/*check if line in th einput file the compare to marco exist name*/
+/* * Checks if a line in the input file contains a macro name and replaces it with the corresponding macro content.*/
 int checkMacroName(Macro *head, char line[], FILE *cpy)
 {
     Macro *cur = head;
@@ -58,7 +45,8 @@ int checkMacroName(Macro *head, char line[], FILE *cpy)
     return 0;
 }
 
-/*function to check if we are iun marco or in the end*/
+/*function to check if we are in marco or in the end, Checks if the current line is part of a macro definition and stores the macro name for later processing.
+*/
 int checkInMacro(char line[], Macro **head)
 {
     char macroName[100];
@@ -80,7 +68,6 @@ int checkInMacro(char line[], Macro **head)
             j++;
         }
         macroName[j] = '\0';
-        printf("The macro name is: %s\n", macroName);
     }
     else
     {
@@ -89,7 +76,6 @@ int checkInMacro(char line[], Macro **head)
             return 2;
         }
 
-        printf("The line does not contain a valid macro.\n");
     }
     strcpy(temp->name, macroName);
     temp->next = NULL;
@@ -110,6 +96,9 @@ int checkInMacro(char line[], Macro **head)
     return 1;
 }
 
+
+/*Performs macro processing on an input assembly code file.
+  It identifies macro definitions, replaces their occurrences, and then performs the first pass on the processed code.*/
 int preProcess(char *fileName) {
 
     FILE *file, *copy;
@@ -118,22 +107,20 @@ int preProcess(char *fileName) {
     int isInMacro = 0;
     int i;
     Macro *head = NULL;
-    char *origin = str_allocate_cat(fileName, ".txt");
-    char *copyName = str_allocate_cat(fileName, ".copytxt");
+    char *origin = stringTwoStrings(fileName, ".as");
+    char *copyName = stringTwoStrings(fileName, ".am");
 
     file = fopen(origin, "r");
     copy = fopen(copyName, "w");
-    printf("%s\n", origin);
-    printf("%s", copyName);
+
     if (file == NULL) {
-        printf("Error opening files\n");
         return 1;
     }
 
 
         while (fgets(line, sizeof(line), file) != NULL)
         {
-            if (isInMacro == 2)
+            if (isInMacro == 2)/*if isInMacro its mean that its the end of macro*/
             {
                 isInMacro = 0;
             }
@@ -143,17 +130,17 @@ int preProcess(char *fileName) {
             }
             if (strncmp(line, "endmcro", 7) == 0)
             {
-                printf(":) :(");
                 isInMacro=2;
+            }
+            if (isInMacro == 1)
+            {
+                strncat(head->content, line, strlen(line));
             }
 
             if (strstr(line, "mcro") != NULL)
             {
-                printf("The word '%s' is found in the line: %s", "mcro", line);
                 isInMacro = checkInMacro(line, &head);
-               /* fgets(line, sizeof(line), file);*/
             }
-            /*  printf("%lu\n", strspn(line, "mcro"));*/
             if(isInMacro!=2){
                 isEmptyLine = 1;
                 for (i = 0; i < strlen(line); i++)
@@ -182,14 +169,7 @@ int preProcess(char *fileName) {
                         fputs(line, copy);
                     }
                 }
-                if (isInMacro == 1)
-                {
-                    strncat(head->content, line, strlen(line));
-
-                    printf("The con  is found: %s", head->content);
-                }
             }
-
         }
 
 

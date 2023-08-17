@@ -4,20 +4,17 @@
 
 int errorFirst=0;/*global variable the defined if there are any error int the first pass 0- there are no 1-there are*/
 
-
-int ic, L, dc;
-
-void printError(char *printText){
-    printf("\033[0;31m"); /* Red */
-    printf("invalid : %s",printText);
-    printf("\033[0m\n");
+/*  Prints an error message in red text to stderr and sets the errorFirst flag.*/
+void printError(char *printText)
+{
+    fprintf(stderr,"\033[0;31m Invalid : %s \033[0m\n",printText); /* Red */
     errorFirst=1;
 
 }
+/*  Prints the binary representation of an integer.*/
 void printBin(int x)
 {
     unsigned int mask = 1<<11;
-   /* unsigned int mask = 1 << (sizeof(short int) * 8 - 1);*/
     while (mask != 0)
     {
         if (x & mask)
@@ -28,76 +25,75 @@ void printBin(int x)
         mask = mask >> 1;
     }
 }
-
-void printarray(LABEL *head)
+/*Prints the content of the code image in binary and its type*/
+void printarray(LABEL *head,cidodProp progArr[],int L)
 {
     LABEL *temp =head;
     int i;
-    printf("\nthe code image:\n");
-    printf("binarry code      type\n");
+    printf("\nThe code image:\n");
+    printf("Binary code      type\n");
     for (i = 0; i < L; i++)
     {
         printf("%d: ", i);
         printBin(progArr[i].code);
-        printf("  ,%d", progArr[i].type);
-        printf("\n");
+        printf("  ,%d\n", progArr[i].type);
     }
-    printf("\nthe label     table:      type:  \n");
-    while(temp!=NULL){
-        printf("%s           %d       %d\n", temp->labelName, temp->lineNum,temp->type);
-        temp = temp->next;
-
-    }
-    /*if (head != NULL) {
-        do {
-            printf("%s           %d       %d\n", temp->labelName, temp->lineNum,temp->type);
-            temp = temp->next;
-        } while (temp != head);
-    }*/
-    printf("\n");
 }
 
 
-
 /*check if the label name is already exist in the label linked list if yes return 1 else return 0*/
-int checkExistLabel(LABEL **head,char *Name){
+int checkExistLabel(LABEL **head,char *name)
+{
     LABEL *temp=*head;
-    while(temp!=NULL){
-        if (strcmp(temp->labelName,Name) == 0)
+    while(temp!=NULL)
+    {
+        if (strcmp(temp->labelName,name) == 0)
+        {
             return 1;
+        }
         temp=temp->next;
     }
     return 0;
 }
-
-void insertNode2(LABEL ** head, int lineNum,  char *labelName, int type) {
+/*insert node to the list- function to the label that need to decode in the next pass*/
+void insertHeadToDecode(LABEL ** headToDecode, int lineNum,  char *labelName, int type)
+{
 
     LABEL* newLabel = (LABEL*)malloc(sizeof(LABEL));
-    LABEL * cur=*head;
+    LABEL * cur=*headToDecode;
     char *ezer;
     int i=0;
     newLabel->lineNum = lineNum;
     ezer = (char*)malloc(strlen(labelName) + 1);
-    for(i=i;i< strlen(labelName)-1;i++){
+    if (newLabel==NULL||ezer==NULL)
+    {
+        printf("Error in memory allocated!");
+        exit(0);
+    }
+    while(i< strlen(labelName)&& labelName[i]!='\n')
+    {
         ezer[i]= labelName[i];
+        i++;
     }
     ezer[i]='\0';
-    /*strncpy(newLabel->labelName, labelName, sizeof(newLabel->labelName) - 1);*/
     strcpy(newLabel->labelName, ezer);
-    newLabel->labelName[sizeof(newLabel->labelName) - 1] = '\0'; /*Ensure null-termination-check it with miki*/
+    newLabel->labelName[sizeof(newLabel->labelName) - 1] = '\0';
     newLabel->type = type;
     newLabel->next = NULL;
-        if (*head == NULL) {
-            *head = newLabel;
-        } else {
-            while (cur->next != NULL) {
-                cur = cur->next;
-            }
-            cur->next = newLabel;
+    if (*headToDecode == NULL)
+    {
+        *headToDecode = newLabel;
+    } else {
+        while (cur->next != NULL)
+        {
+            cur = cur->next;
         }
+        cur->next = newLabel;
+    }
 }
-
-void insertNode(LABEL ** head, int lineNum,  char *labelName, int type) {
+/* Inserts a node for a label into the label linked list.*/
+void insertNode(LABEL ** head, int lineNum,  char *labelName, int type)
+{
 
     LABEL* newLabel = (LABEL*)malloc(sizeof(LABEL));
     LABEL * cur=*head;
@@ -106,215 +102,228 @@ void insertNode(LABEL ** head, int lineNum,  char *labelName, int type) {
     newLabel->labelName[sizeof(newLabel->labelName) - 1] = '\0'; /*Ensure null-termination-check it with miki*/
     newLabel->type = type;
     newLabel->next = NULL;
-
-
-    if (checkExistLabel(head, labelName)){
+    if (checkExistLabel(head, labelName))
+    {
         printError("The label  is already exist");
     }
-    else{
-        if (*head == NULL) {
+    else
+    {
+        if (*head == NULL)
+        {
             *head = newLabel;
 
-        } else {
+        } else
+        {
 
-            while (cur->next != NULL) {
+            while (cur->next != NULL)
+            {
                 cur = cur->next;
             }
             cur->next = newLabel;
         }
-
     }
 }
-
-short int kidodSourceMion(Operand source, Operand target,LABEL **headUnFind) /*change to pointer^^^^^^^^^^*/
+/* Generates machine code for target operands in the instruction by different mion methods .*/
+short int cidodSourceMion(Operand source, Operand target,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic,int *dc) /*change to pointer^^^^^^^^^^*/
 {
-    short  kidod = 0;
-
-
+    short  coding = 0;
     if (source.mion == 5)
     {
-        kidod = kidod | (source.num << 7);
-        progArr[L].code = kidod;
-        progArr[L].type = 1;
-        ic++;
-        L++;
+        coding = coding | (source.num << 7);
+        progArr[*L].code = coding;
+        progArr[*L].type = 1;
+
     }
     else if (source.mion == 1)
     {
-        kidod = kidod | (source.num << 2);
-        ic++;
-        L++;
+        coding = coding | (source.num << 2);
     }
-    else if (source.mion == 3)
-    {
-        ic++;
-        L++;
-    }
+    (*ic)++;
+    (*L)++;
     if (target.mion == 5)
     {
         if (source.mion == 5)
         {
-            kidod = kidod | (target.num << 2);
-            progArr[L - 1].code = kidod;
+            coding = coding | (target.num << 2);
+            progArr[(*L) - 1].code = coding;
         }
         else
         {
-            kidod = 0;
-            kidod = kidod | (target.num << 2);
-            progArr[L].code = kidod;
-            progArr[L].type = 1;
+            coding = 0;
+            coding = coding | (target.num << 2);
+            progArr[*L].code = coding;
+            progArr[*L].type = 1;
 
-            ic++;
-            L++;
+            (*ic)++;
+            (*L)++;
         }
     }
     else if (target.mion == 1)
     {
-        kidod = 0;
-        kidod = kidod | (target.num << 2);
-        progArr[L].code = kidod;
-        progArr[L].type = 1;
-        ic++;
-        L++;
+        coding = 0;
+        coding = coding | (target.num << 2);
+        progArr[*L].code = coding;
+        progArr[*L].type = 1;
+        (*ic)++;
+        (*L)++;
     }
     else if (target.mion == 3)
     {
-        kidod = 0;
-        progArr[L].code = kidod;
-        progArr[L].type = 1;
-        insertNode2(headUnFind,L,target.labelName,0);
-        ic++;
-        L++;
+        coding = 0;
+        progArr[*L].code = coding;
+        progArr[*L].type = 1;
+        insertHeadToDecode(headToDecode,*L,target.labelName,0);
+        (*ic)++;
+        (*L)++;
     }
-
-    return kidod;
+    return coding;
 }
-
-short int kidodTargetMion(Operand target,LABEL **headUnFind)
+/*Generates machine code for target operands */
+short int kidodTargetMion(Operand target,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic, int *dc)
 {
     /*combine with the source function, think about the source when its null*/
-    short int kidod = 0;
+    short int coding = 0;
     if (target.mion == 5 || target.mion == 1)
     {
-        kidod = kidod | (target.num << 2);
+        coding = coding | (target.num << 2);
     }
     else if(target.mion==3){
-        insertNode2(headUnFind,L,target.labelName,0);
+        insertHeadToDecode(headToDecode,*L,target.labelName,0);
     }
-    progArr[L].code = kidod;
-    progArr[L].type = 1;
-    ic++;
-    L++;
-    return kidod;
+    progArr[*L].code = coding;
+    progArr[*L].type = 1;
+    (*ic)++;
+    (*L)++;
+    return coding;
 }
-
-int DirectiveData(char *sourceCode)
+/*Handles the ".data" directive, converting data values to machine code*/
+int DirectiveData(char *sourceCode,cidodProp *progArr,int *L, int *ic, int *dc)
 {
-    char *dataNum;
+    char *dataNum,*ptr,*source = NULL;
+    int num,countData=0,i=0,countComma=0,sourceLen= (int) (source);
+    source = (char *)malloc(sourceLen= + 1);
+    strcpy(source,sourceCode);
     dataNum= strtok(sourceCode,", ");
-
-    char *ptr;
-    int num,countChar=0,i=0;
-    /*token=strtok(0," ");*/
+    if (source == NULL)
+    {
+        printf("Error in memory allocated!");
+        exit(0);
+        return -1;
+    }
     if (dataNum)
     {
         while (dataNum)
         {
-            printf("token in brefore Dirctive data function is : %s|\n", dataNum);
             num = (int)strtol(dataNum, &ptr, 10);
             /*check if there are some char that are not integer in the dataNum */
-            i=0;
-            while(i< strlen(ptr)&&ptr[i]!=','){
-                printf("ptr[i] is: %c|",ptr[i]);
-                if(!isspace(ptr[i])&&(ptr[i]!=',')){
-                    countChar++;
-                }
-                i++;
-            }
-
-            if(!countChar)
+            if(strcmp(ptr, "") == 0|| strcmp(ptr,"\n")==0)
             {
-                printf("The number(unsigned long integer) is %d\n", num);
-                progArr[L].code=num;
-                progArr[L].type=0;
-                L++;
-                dc++;
+                /*Check if the numbers are in the appropriate range for 12 bits*/
+                if (num<2048&&num>-2049)
+                {
+                    progArr[*L].code=num;
+                    progArr[*L].type=0;
+                    (*L)++;
+                    (*dc)++;
+                }
+                else
+                {
+                    printError("There is an invalid number in the input, the number range should be between -2048 to 2047 ");
+                }
             }
             else{
-                /*error that there are some chars instead of integer^^^^^^^^^^^^*/
+                printError("The number is invalid, there are invalid characters");
             }
             dataNum = strtok(NULL, ", ");
-            printf("token in afterDirctive data function is : %s|\n", dataNum);
-            printf("String part is |%s|", ptr);
+            countData++;
+        }
+        /*Check if the number of commas matches the number of numbers*/
+        while (i< sourceLen)
+        {
+            if (source[i]==',')
+            {
+                countComma++;
+            }
+            i++;
         }
     }
     else
     {
-        /*error about null witch mean that there are no data^^^^^^^^^^ */
+        printError("No data after operation data");
     }
-
+    free(source);
+    if(countComma>=countData)
+    {
+        printError("There are unnecessary commas in the sentence");
+    }
     /*add check if the first and last char are "" and check if there are more conditions in the instructors ^^^^^*/
-    printf("wwsline in Dirctive data function is : %s|\n", sourceCode);
-    printf("token in Dirctive data function is : %s|\n", dataNum);
     return 0;
 }
-int DirectiveString(char *sourceCode)
+/*Handles the ".string" directive, converting string characters to machine code.*/
+int DirectiveString(char *sourceCode,cidodProp *progArr,int *L, int *ic, int *dc)
 {
     int i, len = 0;
+    char *ch;
     len = (int)strlen(sourceCode);
-    /*add check if the first and last char are "" and check if there are more conditions in the instructors ^^^^^*/
-    printf("wwsline in Dirctive string function is : %s\n", sourceCode);
-    for (i = 1; i < len - 2; i++)
+
+
+    for (i = 0; i < len ; i++)
     {
-        printf("source code binary ^^^^^^^\n");
-        printBin(sourceCode[i]);
-        printf("\n");
-        printf("counterLine : %d    char is: %c^^^^^^^\n", L, sourceCode[i]);
-        progArr[L].code = sourceCode[i];
-        progArr[L].type = 0;
-        L++;
-        dc++;
+        if(sourceCode[i]=='\n'){
+            printError("In the line \".string\" the word does not end with \"");
+        }
+        progArr[*L].code = sourceCode[i];
+        progArr[*L].type = 0;
+        (*L)++;
+        (*dc)++;
     }
-    progArr[L].code = 0;
-    progArr[L].type = 0;
-    L++;
-    dc++;
+    ch= strtok(NULL," \"");
+    progArr[*L].code = 0;
+    progArr[*L].type = 0;
+    (*L)++;
+    (*dc)++;
     return 0;
 }
-int oneOperand(int act, char *wwsline,LABEL **headUnFind)
+/*Generates machine code for one-operand instructions*/
+int oneOperand(int act, char *wwsline,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic,int *dc)
 {
-    int operand_num_temp;
-    short int kidod = 0;
+    int operand_num_temp=0;
+    short int coding = 0;
     Operand opr_target;
-    printf(" wwsline in oneOperand function:%s\n", wwsline);
-    /*wwsline = strtok(NULL, " ");*/
-    printf(" wwsline in oneOperand function:  %s\n", wwsline);
-    kidod = (act << 5);
-    opr_target = oprandType(wwsline);
+    coding = (act << 5);
+    opr_target = oprandType(wwsline); /*oprandType(wwsline,&opr_tearget);*/
+    if (opr_target.mion==1)
+    {
+        /*If there is an error and the type of addressing method does not match the type of operation, the row will not enter the coding table*/
+        if ((act>3&&act<6)||(act>6&&act<12)||act==13)
+        {
+            printError("There is an addressing method that does not fit the type of operation");
+            return 1;
+        }
+    }
+    wwsline= strtok(NULL," \n\t ");
+    if (wwsline!=NULL)
+    {
+        printError("In the input file there is a line with a directive that should have one operand but there are more");
+    }
     operand_num_temp = opr_target.mion;
-    printf(" operand_num_temp22 %d\n", operand_num_temp);
-    printf(" optarget %s\n", wwsline);
-    kidod = kidod | (operand_num_temp << 2);
-    progArr[L].code = kidod;
-    progArr[L].type = 1;
-
-    ic++;
-    L++;
-    printf("\nkidod: ");
-    printBin(kidod);
-    printf("\n");
-    printBin(kidodTargetMion(opr_target,headUnFind));
+    coding = coding | (operand_num_temp << 2);
+    progArr[*L].code = coding;
+    progArr[*L].type = 1;
+    (*L)++;
+    (*ic)++;
+    kidodTargetMion(opr_target,headToDecode,progArr,L,ic,dc);
     return 0;
 }
 
-int twoOperands(int act, char *wwsline,LABEL **headUnFind)
+/* Generates machine code for two-operand instructions.*/
+int twoOperands(int act, char *wwsline,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic, int *dc)
 {
     int operand_num_temp;
-    char *token, opsource[MAX_LABEL], optarget[MAX_LABEL], *start;
-    short int kidod = 0;
-    Operand opr_source, opr_target;
+    char *token, chOpsource[MAX_LABEL], chOptarget[MAX_LABEL], *start;
+    short int coding = 0;
+    Operand oprSource, oprTarget;
     token = strtok(wwsline, ",");
-    printf(" token %s\n", token);
     if (token)
     {
         start = token;
@@ -322,11 +331,8 @@ int twoOperands(int act, char *wwsline,LABEL **headUnFind)
         {
             start++;
         }
-        strcpy(opsource, start);
-        printf("opsource: %s\n", opsource);
-
+        strcpy(chOpsource, start);
         token = strtok(NULL, ",");
-        printf("Token: %s\n", token);
         if (token)
         {
             /*Trim leading spaces and tabs from optarget*/
@@ -335,64 +341,63 @@ int twoOperands(int act, char *wwsline,LABEL **headUnFind)
             {
                 start++;
             }
-            strcpy(optarget, start);
-            printf("optarget: %s\n", optarget);
+            strcpy(chOptarget, start);
+            token= strtok(NULL,", ");
+            if (token!=NULL)
+            {
+                printError("In the input file there is a line with a directive that should have two operand but there are more");
+            }
         }
         else
         {
-            strcpy(optarget, ""); /*Set optarget as an empty string if no second word is found*/
+            strcpy(chOptarget, ""); /*Set optarget as an empty string if no second word is found*/
+            printError("In the input file there is a line with a directive that should have two operand but there is less");
         }
     }
+    else
+    {
+        printError("In the input file there is a line with a directive that should have two operand but there is less");
+    }
 
-    printf(" opsource %s\n", opsource);
-    printf(" optarget %s\n", optarget);
 
-    printf(" wwsline!!! %s\n", wwsline);
-    /*opsource = strtok(wwsline, ",");*/
-    kidod = kidod | (act << 5);
-    opr_source = oprandType(opsource);
-    operand_num_temp = opr_source.mion;
-    kidod = kidod | (operand_num_temp << 9);
-
-    printf(" act!!! %d\n", act);
-
-    /*if opsource is null thien errorrrr! */
-    printf(" opsource %s\n", opsource);
-    printf(" operand_num_temp %d\n", operand_num_temp);
-    /*optarget = strtok(NULL, "/n");*/
-    opr_target = oprandType(optarget);
-    operand_num_temp = opr_target.mion;
-    printf(" operand_num_temp22 %d\n", operand_num_temp);
-    printf(" optarget %s\n", optarget);
-    kidod = kidod | (operand_num_temp << 2);
-    progArr[L].code = kidod;
-    progArr[L].type = 1;
-    ic++;
-    L++;
-    printf("\nkidod: ");
-    printBin(kidod);
-    printf("\n");
-    printf("bin kidod:\n");
-    printBin(kidodSourceMion(opr_source, opr_target,headUnFind));
-
-    /*if optarget is null thien errorrrr! */
+    coding = coding | (act << 5);
+    oprSource = oprandType(chOpsource);
+    /*If there is an error and the type of addressing method does not match the type of operation, the row will not enter the coding table*/
+    if (oprSource.mion!=3&&act==6)
+    {
+        printError("There is an addressing method that does not fit the type of operation");
+        return 1;
+    }
+    operand_num_temp = oprSource.mion;
+    coding = coding | (operand_num_temp << 9);
+    oprTarget = oprandType(chOptarget);
+    operand_num_temp = oprTarget.mion;
+    if(act!=1&&operand_num_temp==1)
+    {
+        printError("There is an addressing method that does not fit the type of operation");
+        return 1;
+    }
+    coding = coding | (operand_num_temp << 2);
+    progArr[*L].code = coding;
+    progArr[*L].type = 1;
+    (*ic)++;
+    (*L)++;
+    cidodSourceMion(oprSource, oprTarget,headToDecode,progArr,L,ic,dc);
     return 0;
 }
+
 Operand oprandType(char *op)
 {
-    char* endptr;
-    Operand opr;/*check with miki if is it should be with malloc to with null to restart value */
+    char* endptr,*opWS;/*opWS- op without spcaes*/
+    Operand opr;
     int i=0, num1=0;
-
-    /*printf("\n%lu\n", op[0]);*/
+    opWS= strtok(op," \n\t");
     if (op[0] == '@')
     {
-        if (strlen(op) != 4)
+        if (strlen(opWS) != 3)
         {
-            printf("|%s| error in operand input %lu\n",op, strlen(op));
-            printf("error in operand input\n");
+            printError("error in operand type @r is too long");
         }
-        printf("\n@@@@\n");
         if (op[1] == 'r')
         {
             if (op[2] >= '0' && op[2] <= '7') /*check lenght^^^^^^^^^^^*/
@@ -403,42 +408,31 @@ Operand oprandType(char *op)
             }
             else
             {
-                /*put into error text*/
-                printf("\033[0;31m"); /* Red */
-                printf("invalid register: name not exist");
-                printf("\033[0m\n");
+                printError(" register: The name of the register does not exist, registers between @r0 and @r7");
             }
         }
         else
         {
-            /*put into error text*/
-            printf("\033[0;31m"); /* Red */
-            printf("invalid register: name not exist");
-            printf("\033[0m\n");
+            printError(" register: name not exist");
         }
     }
         /*else if (atoi(op))*/ /*^^^^^^^^^^^^^^^^^^^^^^^^why isdigit not good*/
     else if ((op[0] >= '0' && op[0] <= '9') || op[0] == '-'||op[0]=='+')
     {
-
-
          num1 =  (int)strtoll(op, &endptr, 10);
-        if (isspace(*endptr)) {
+        if (isspace(*endptr)|| strcmp(endptr,"") == 0) {
             opr.num=num1;
             opr.mion = 1;
-        } else {
+        } else
+        {
             printError("invalid number");
             opr.num=0;
             opr.mion = 1;
         }
-
-
-
         return opr;
     }
     else
     {
-
         opr.num = 0;
         opr.mion = 3;
         strcpy(opr.labelName, op);
@@ -448,56 +442,60 @@ Operand oprandType(char *op)
 }
 
 
-/*check the suntence type Insruction, derctive, and what tro do next*/
-int typeSen(char *line, LABEL **head,LABEL **headUnFind)
+/*Determines the type of sentence (instruction or directive) and processes it accordingly.*/
+/*Parameters: line - String containing the assembly code line.
+head - Pointer to the label list.
+headUnFind - Pointer to the label table for unresolved labels.
+progArr - Array of kidodProp structs to store generated code.*/
+int typeSen(char *line, LABEL **head,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic,int *dc)
 {
-
-    char *wwsline;
-    char *token;
+    char *wwsline, *token;
     short act;
-    LABEL *lblNode=(LABEL*) malloc(sizeof (LABEL));
+    int countQue=0,i=0,lenWord;
     wwsline= strchr(line,':');
-
     if (wwsline)/*check if there is label by the check if there is : in the sentences*/
     {
         wwsline = strtok(line, ":");
-        printf(" wwsline in if %s\n", wwsline);
-        insertNode(head,L+100,wwsline,0);
-        printf("%s    %d\n", lblNode->labelName,  lblNode->lineNum);
-        printf("Line in if : %s  \nwwsline: %s\n", line, wwsline);
-        token = wwsline;
-        token = strtok(NULL, " \n");
-    }
-    else
-    {
-        printf(" wwsline is NULL\n");
-        token = strtok(line, " ");
-    }
-    if (token)
-    {
-        printf(" tokennnnnnn22: %s\n", token);
-    }
-    else
-    {
-        printf(" tokennnnnnn22 is null\n");
-    }
-    /*if token is null then error ^^^^^^^^^^^^^^^^^^^*/
-    act = actionArray(token);
-    /*act = act << 5;*/
-    printf(" act number : %d\n", act);
+        if (strlen(wwsline)<31)
+        {
+            if (actionArray( wwsline) == -1)
+            {
+                insertNode(head, *L + 100, wwsline, 0);
+                token = wwsline;
+                token = strtok(NULL, " \n");
+            }
+            else
+            {
+                printError("Label name can not be an action name");
+            }
 
-    printf("  wwsline22222: %s\n", wwsline);
-    printBin(act);
-    printf("\n");
+        }
+        else
+        {
+            printError("The max lenght for label name is 31");
+        }
+
+    }
+    else
+    {
+        token = strtok(line, " \n");
+    }
+    if(!token)
+    {
+        printError("Missing details");
+    }
+
+    act = actionArray(token);
     switch (act)
     {
+        /*first group mov, cmp,add, sub, lea 0, 1, 2, 3,6 */
         case 0:
         case 1:
         case 2:
         case 3:
         case 6:
             wwsline = strtok(NULL, "\n");
-            twoOperands(act, wwsline,headUnFind);
+            twoOperands(act, wwsline,headToDecode,progArr,L,ic,dc);
             break;
             /*second group not, clr, inc, jmp, bne, red, prn, jsr 4,5,7,9,10,11,12,13*/
         case 4:
@@ -509,24 +507,50 @@ int typeSen(char *line, LABEL **head,LABEL **headUnFind)
         case 12:
         case 13:
             wwsline = strtok(NULL, " ");
-
-            oneOperand(act, wwsline,headUnFind);
-
+            oneOperand(act, wwsline,headToDecode,progArr,L,ic,dc);
             break;
         case 8:
         case 14:
         case 15:
+            progArr[*L].code = 0|(act << 5);
+            progArr[*L].type = 1;
+            (*ic)++;
+            (*L)++;
             break;
         case 16:
-            wwsline = strtok(NULL, " ");
-            printf("  wwsline3333: %s\n", wwsline);
-            DirectiveString(wwsline);
+            token = strtok(NULL, "\n");
+            if(token==NULL)
+            {
+                printError("There is no word after the action .string");
+            }
+            else
+            {
+                lenWord= strlen(token);
+                for(i=0;i<lenWord;i++)
+                {
+                    if (token[i]=='\"')
+                    {
+                        countQue++;
+                    }
+                }
+                if (countQue>2)
+                {
+                    printError("The line format \".string\" does not match its definition, there are too many quotation marks");
+                }
+                else if(token&&token[0]!='\"')
+                {
+                    printError("Error inputting the .string command, the word does not begin with \"");
+                }
+                else
+                {
+                    wwsline = strtok(token, "\"");
+                    DirectiveString(wwsline,progArr,L,ic,dc);
+                }
+            }
             break;
-
         case 17:
             wwsline = strtok(NULL, " ");
-            printf(" wwsline44: %s\n", wwsline);
-            DirectiveData(wwsline);
+            DirectiveData(wwsline,progArr,L,ic,dc);
             break;
         case 18:
             externFlag=1;
@@ -534,25 +558,12 @@ int typeSen(char *line, LABEL **head,LABEL **headUnFind)
         case 19:
             entryFlag=1;
             wwsline = strtok(NULL, " ");
-          /*  labelDefinition(act, wwsline, (LABEL *) head);*/
             break;
 
         default:
-
-            printf("\033[0;31m"); /* Red */
-            printf("invalid\n");
-            printf("\033[0m\n");
+            printError("The input has an undefined instruction");
             break;
     }
-    /*if(act==17||act==16){
-
-    }
-    else if(act<16){
-
-    }
-    else{
-        fprintf(stderr, "invalid");
-    }*/
     return 1;
 }
 
@@ -572,45 +583,49 @@ short actionArray(char *ch)
     return -1;
 }
 
-/*read line after line*/
+/*Performs the first pass of the assembler, processing the assembly source code and generating the label and code arrays.
+Parameters: fileName - Name of the source code file.*/
 int firstppass(char *fileName)
 {
-    LABEL *headUnfind=NULL;/*label that need to get*/
+    int ic=0, L=0, dc=0;
+    LABEL *headToDecode=NULL;/*label that need to get*/
     LABEL *head=NULL;
-    char *strError;
-    char line[MAX_LABEL];
-    int lenght;
+    char *strError,*copytext,line[MAX_LINE];
     int isLenght=0,i=0;
-    char i_str[20]; // Assuming the number can fit in 20 characters
-
+    char i_str[20];
     FILE *copy;
-    copy = fopen("textfile.copytxt", "r");
+    char *copyName = stringTwoStrings(fileName, ".am");
+    cidodProp progArr[MEMORY_ARRAY_SIZE];
+    copy = fopen(copyName, "r");
     while (fgets(line, sizeof(line), copy) != NULL)
     {
-        for (i = 0; i < MAX_LABEL; ++i) {
-            if ( line[i] =='\n'){
+
+        for (i = 0; i < MAX_LINE; ++i)
+        {
+            if ( line[i] =='\n')
+            {
                 isLenght=1;
                 break;
             }
         }
-        if (isLenght){
-            typeSen(line, &head,&headUnfind);
+        if (isLenght)
+        {
+            typeSen(line, &head,&headToDecode,progArr,&L,&ic,&dc);
         }
         else
         {
             sprintf(i_str, "%d", i);
-            strError= str_allocate_cat("line: ",i_str);
-            strError= str_allocate_cat(strError," is too long, the max is 81 chars per line");
+            strError= stringTwoStrings("line: ",i_str);
+            strError= stringTwoStrings(strError," is too long, the max is 81 chars per line");
             printError( strError);
         }
 
     }
-    printarray(head);
-    printarray(headUnfind);
-    lenght=L;
-    if(!errorFirst){
-        secondPass(&head,&headUnfind,fileName,lenght);
+    printarray(head, progArr,L);
+    printarray(headToDecode,progArr,L);
+    if(!errorFirst)
+    {
+        secondPass(&head,&headToDecode,fileName,L,progArr);
     }
-
     return 0;
 }

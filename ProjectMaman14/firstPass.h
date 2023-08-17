@@ -7,8 +7,6 @@
 #include "secondPass.h"
 
 
-#define MAX_LINE 80
-
 
 typedef struct Operand
 {
@@ -22,14 +20,14 @@ typedef struct Operand
 
 void printError(char *printText);
 void insertNode(LABEL ** head, int lineNum,  char *labelName, int type);
-short int kidodSourceMion(Operand source, Operand target,LABEL **headUnFind) ;
-short int kidodTargetMion(Operand targert,LABEL **headUnFind);
-int DirectiveData(char *sourceCode);
-int DirectiveString(char *sourceCode);
-int oneOperand(int act, char *wwsline,LABEL **headUnFind);
-int twoOperands(int act, char *wwsline,LABEL **headUnFind);
+short int cidodSourceMion(Operand source, Operand target,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic,int *dc) ;
+short int kidodTargetMion(Operand target,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic, int *dc);
+int DirectiveData(char *sourceCode,cidodProp *progArr,int *L, int *ic, int *dc);
+int DirectiveString(char *sourceCode,cidodProp *progArr,int *L, int *ic, int *dc);
+int oneOperand(int act, char *wwsline,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic, int *dc);
+int twoOperands(int act, char *wwsline,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic, int *dc);
 Operand oprandType(char *op);
-int typeSen(char *line, LABEL **head,LABEL **headUnFind);
+int typeSen(char *line, LABEL **head,LABEL **headToDecode,cidodProp *progArr,int *L,int *ic,int *dc);
 short actionArray(char *ch);
 int firstppass(char *fileName);
 

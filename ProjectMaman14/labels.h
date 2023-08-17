@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #define MAX_LABEL 31
+#define MEMORY_ARRAY_SIZE 1024
 
 typedef struct LABEL
 {
@@ -11,12 +12,11 @@ typedef struct LABEL
     int type; /*0-none, 1-entry,2-extern*/
     struct LABEL *next;
 } LABEL;
-typedef struct kidodProp
+typedef struct cidodProp
 {
     unsigned short code;
     int type; /*0-directive(hanhia), 1-instruction(horaa)*/
-} kidodProp;
+} cidodProp;
 
-char *str_allocate_cat(char *first_str, char *second_str);
+char *stringTwoStrings(char *first_str, char *second_str);
 int externFlag,entryFlag;
-kidodProp progArr[100];

@@ -14,7 +14,7 @@ typedef struct Macro{
     struct Macro *next;
 }Macro;
 
-char *str_allocate_cat(char *first_str, char* second_str);
+char *stringTwoStrings(char *first_str, char* second_str);
 int copyContentToFile(Macro *cur, FILE *cpy);
 int checkMacroName(Macro *head, char line[], FILE *cpy);
 int checkInMacro(char line[], Macro **head);

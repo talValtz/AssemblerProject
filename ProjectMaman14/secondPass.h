@@ -7,6 +7,6 @@
 
 #include "labels.h"
 
-void labelDefinition(int act, char *label, LABEL *head);
-int secondPass(LABEL **head,LABEL **headUnfind,char *fileName,int L);
+void  completeTabel(LABEL **head,LABEL **headToDecode,int L,cidodProp  *progArr);
+int secondPass(LABEL **head,LABEL **headToDecode,char *fileName,int L,cidodProp *progArr);
 #endif //PROJECTMAMAN14_SECONDPASS_H

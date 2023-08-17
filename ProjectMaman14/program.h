@@ -7,7 +7,8 @@
 #include "macro.h"
 
 #define MAX_FILE_NAME 30
-#define MAX_LABEL 83
+#define MAX_LABEL 31
+#define MAX_LINE 83
 
 
 
