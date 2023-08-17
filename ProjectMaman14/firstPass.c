@@ -301,11 +301,11 @@ int oneOperand(int act, char *wwsline,LABEL **headToDecode,cidodProp *progArr,in
             return 1;
         }
     }
-    wwsline= strtok(NULL," \n\t ");
-    if (wwsline!=NULL)
+   /* wwsline= strtok(NULL,"");*/
+    /*if (wwsline!=NULL)
     {
         printError("In the input file there is a line with a directive that should have one operand but there are more");
-    }
+    }*/
     operand_num_temp = opr_target.mion;
     coding = coding | (operand_num_temp << 2);
     progArr[*L].code = coding;
@@ -332,7 +332,7 @@ int twoOperands(int act, char *wwsline,LABEL **headToDecode,cidodProp *progArr,i
             start++;
         }
         strcpy(chOpsource, start);
-        token = strtok(NULL, ",");
+        token = strtok(NULL, ", \n");
         if (token)
         {
             /*Trim leading spaces and tabs from optarget*/
@@ -506,8 +506,14 @@ int typeSen(char *line, LABEL **head,LABEL **headToDecode,cidodProp *progArr,int
         case 11:
         case 12:
         case 13:
-            wwsline = strtok(NULL, " ");
+            wwsline = strtok(NULL, " \n");
             oneOperand(act, wwsline,headToDecode,progArr,L,ic,dc);
+            wwsline= strtok(NULL,"\n");
+            if (wwsline!=NULL)
+            {
+                printError("In the input file there is a line with a directive that should have one operand but there are more");
+            }
+
             break;
         case 8:
         case 14:
